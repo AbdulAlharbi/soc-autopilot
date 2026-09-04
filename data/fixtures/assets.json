@@ -1,0 +1,64 @@
+{
+  "WS-FIN-017": {
+    "owner": "j.alrashid",
+    "type": "workstation",
+    "os": "Windows 11",
+    "ip": "10.20.14.17",
+    "criticality": "low",
+    "environment": "corporate",
+    "data_classification": "internal",
+    "site": "Riyadh HQ"
+  },
+  "WS-ENG-042": {
+    "owner": "a.khan",
+    "type": "workstation",
+    "os": "Windows 11",
+    "ip": "10.20.22.42",
+    "criticality": "medium",
+    "environment": "corporate",
+    "data_classification": "confidential",
+    "site": "Riyadh HQ"
+  },
+  "WS-IT-ADM-03": {
+    "owner": "r.otaibi",
+    "type": "workstation",
+    "os": "Windows 11",
+    "ip": "10.20.9.3",
+    "criticality": "medium",
+    "environment": "corporate",
+    "data_classification": "confidential",
+    "site": "Riyadh HQ"
+  },
+  "SRV-ERP-01": {
+    "owner": "f.zahrani",
+    "type": "server",
+    "os": "Windows Server 2022",
+    "ip": "10.30.1.11",
+    "criticality": "critical",
+    "environment": "production",
+    "data_classification": "restricted",
+    "business_service": "SAP ERP (finance, payroll, procurement)",
+    "site": "Riyadh DC1"
+  },
+  "SRV-FS-03": {
+    "owner": "f.zahrani",
+    "type": "file_server",
+    "os": "Windows Server 2022",
+    "ip": "10.30.1.33",
+    "criticality": "high",
+    "environment": "production",
+    "data_classification": "restricted",
+    "business_service": "Finance file shares",
+    "site": "Riyadh DC1"
+  },
+  "VA-SCANNER-01": {
+    "owner": "vuln-mgmt",
+    "type": "scanner",
+    "os": "Linux",
+    "ip": "10.20.5.15",
+    "criticality": "low",
+    "environment": "corporate",
+    "data_classification": "internal",
+    "site": "Riyadh HQ"
+  }
+}

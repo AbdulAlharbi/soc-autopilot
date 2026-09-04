@@ -1,0 +1,13 @@
+{
+  "197.210.53.14": {"type": "ip", "verdict": "malicious", "score": 92, "country": "NG", "tags": ["credential-phishing", "residential-proxy", "aitm-infrastructure"], "first_seen": "2026-08-21", "sources": ["vendor-ti", "abuse.ch"]},
+  "45.147.230.221": {"type": "ip", "verdict": "malicious", "score": 97, "country": "NL", "tags": ["cobalt-strike", "c2", "team-server"], "first_seen": "2026-08-30", "sources": ["vendor-ti", "threatfox"]},
+  "91.219.237.18": {"type": "ip", "verdict": "malicious", "score": 88, "country": "RO", "tags": ["ransomware-affiliate", "vpn-bruteforce", "initial-access-broker"], "first_seen": "2026-07-12", "sources": ["vendor-ti"]},
+  "203.0.113.40": {"type": "ip", "verdict": "benign", "score": 2, "country": "SA", "tags": ["isp-residential"], "sources": ["vendor-ti"]},
+  "10.20.5.15": {"type": "ip", "verdict": "benign", "score": 0, "country": "internal", "tags": ["internal", "known-scanner"], "sources": ["internal-allowlist"]},
+  "login-microsoftonline-verify.com": {"type": "domain", "verdict": "malicious", "score": 95, "tags": ["phishing", "microsoft-lookalike", "aitm"], "first_seen": "2026-09-01", "sources": ["vendor-ti", "urlhaus"]},
+  "proton-mail-secure.com": {"type": "domain", "verdict": "suspicious", "score": 61, "tags": ["lookalike", "recently-registered"], "first_seen": "2026-09-02", "sources": ["vendor-ti"]},
+  "invoice-secure-portal.com": {"type": "domain", "verdict": "malicious", "score": 84, "tags": ["phishing-sender", "bec"], "first_seen": "2026-08-28", "sources": ["vendor-ti"]},
+  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855": {"type": "hash", "verdict": "malicious", "score": 99, "malware_family": "CobaltStrike.Beacon", "tags": ["cobalt-strike", "beacon", "loader"], "sources": ["vendor-ti", "malwarebazaar"]},
+  "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08": {"type": "hash", "verdict": "benign", "score": 0, "tags": ["signed-microsoft"], "sources": ["vendor-ti"]},
+  "2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae": {"type": "hash", "verdict": "suspicious", "score": 55, "malware_family": "rclone (dual-use)", "tags": ["exfil-tool", "dual-use"], "sources": ["vendor-ti"]}
+}
