@@ -1,0 +1,14 @@
+{
+  "scanners": [
+    {
+      "ip": "10.20.5.15",
+      "host": "VA-SCANNER-01",
+      "name": "Nessus authenticated scan",
+      "owner": "vuln-mgmt",
+      "change_ref": "CHG-20260812-044",
+      "schedule": {"days": ["Fri"], "start_utc": "00:00", "end_utc": "06:00"},
+      "scope": "10.20.0.0/16"
+    }
+  ],
+  "authorised_red_team_ips": []
+}

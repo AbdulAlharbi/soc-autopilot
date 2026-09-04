@@ -1,0 +1,7 @@
+[
+  {"message_id": "MSG-88213", "recipient": "j.alrashid", "sender": "accounts-payable@invoice-secure-portal.com", "subject": "ACTION REQUIRED: Overdue invoice #4471", "received": "2026-09-04T05:12:40Z", "urls": ["https://login-microsoftonline-verify.com/common/oauth2"], "attachments": [], "status": "delivered", "opened": true},
+  {"message_id": "MSG-88214", "recipient": "s.alqahtani", "sender": "accounts-payable@invoice-secure-portal.com", "subject": "ACTION REQUIRED: Overdue invoice #4471", "received": "2026-09-04T05:12:41Z", "urls": ["https://login-microsoftonline-verify.com/common/oauth2"], "attachments": [], "status": "delivered", "opened": false},
+  {"message_id": "MSG-88215", "recipient": "m.hassan", "sender": "accounts-payable@invoice-secure-portal.com", "subject": "ACTION REQUIRED: Overdue invoice #4471", "received": "2026-09-04T05:12:41Z", "urls": ["https://login-microsoftonline-verify.com/common/oauth2"], "attachments": [], "status": "delivered", "opened": false},
+  {"message_id": "MSG-90112", "recipient": "a.khan", "sender": "vendor.design@out1ook-share.com", "subject": "Updated design spec - please review", "received": "2026-09-04T08:02:15Z", "urls": [], "attachments": ["Design_Spec_v7.docm"], "status": "delivered", "opened": true},
+  {"message_id": "MSG-90113", "recipient": "t.nguyen", "sender": "vendor.design@out1ook-share.com", "subject": "Updated design spec - please review", "received": "2026-09-04T08:02:16Z", "urls": [], "attachments": ["Design_Spec_v7.docm"], "status": "delivered", "opened": false}
+]

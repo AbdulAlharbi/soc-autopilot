@@ -1,0 +1,123 @@
+{
+  "j.alrashid": {
+    "display_name": "Jana Alrashid",
+    "email": "j.alrashid@corp.example",
+    "department": "Finance",
+    "title": "Financial Analyst",
+    "manager": "m.hassan",
+    "account_type": "user",
+    "privileged": false,
+    "vip": false,
+    "mfa_enrolled": true,
+    "usual_countries": ["SA"],
+    "recent_changes": [
+      {"ts": "2026-09-04T05:38:10Z", "type": "oauth_consent", "details": "Consent granted to app 'PDF Viewer Pro' (unverified publisher) with Mail.Read and Mail.ReadWrite scopes", "ref": "APP-7f31"},
+      {"ts": "2026-09-04T05:41:02Z", "type": "mailbox_rule_created", "details": "Inbox rule 'RSS Feeds' forwards mail matching 'invoice|payment|wire' to ap.collections@proton-mail-secure.com and marks as read", "ref": "RULE-1189"}
+    ]
+  },
+  "m.hassan": {
+    "display_name": "Mohammed Hassan",
+    "email": "m.hassan@corp.example",
+    "department": "Finance",
+    "title": "Finance Manager",
+    "manager": "cfo",
+    "account_type": "user",
+    "privileged": false,
+    "vip": false,
+    "mfa_enrolled": true,
+    "usual_countries": ["SA"],
+    "recent_changes": []
+  },
+  "s.alqahtani": {
+    "display_name": "Sara Alqahtani",
+    "email": "s.alqahtani@corp.example",
+    "department": "Finance",
+    "title": "Accounts Payable Specialist",
+    "manager": "m.hassan",
+    "account_type": "user",
+    "privileged": false,
+    "vip": false,
+    "mfa_enrolled": true,
+    "usual_countries": ["SA"],
+    "recent_changes": []
+  },
+  "a.khan": {
+    "display_name": "Ayesha Khan",
+    "email": "a.khan@corp.example",
+    "department": "Engineering",
+    "title": "Product Designer",
+    "manager": "t.nguyen",
+    "account_type": "user",
+    "privileged": false,
+    "vip": false,
+    "mfa_enrolled": true,
+    "usual_countries": ["SA"],
+    "recent_changes": []
+  },
+  "t.nguyen": {
+    "display_name": "Tuan Nguyen",
+    "email": "t.nguyen@corp.example",
+    "department": "Engineering",
+    "title": "Engineering Manager",
+    "manager": "cto",
+    "account_type": "user",
+    "privileged": false,
+    "vip": false,
+    "mfa_enrolled": true,
+    "usual_countries": ["SA"],
+    "recent_changes": []
+  },
+  "r.otaibi": {
+    "display_name": "Rakan Alotaibi",
+    "email": "r.otaibi@corp.example",
+    "department": "IT Infrastructure",
+    "title": "Systems Administrator",
+    "manager": "f.zahrani",
+    "account_type": "user",
+    "privileged": true,
+    "vip": false,
+    "mfa_enrolled": true,
+    "usual_countries": ["SA"],
+    "recent_changes": []
+  },
+  "f.zahrani": {
+    "display_name": "Faisal Alzahrani",
+    "email": "f.zahrani@corp.example",
+    "department": "IT Infrastructure",
+    "title": "Head of Infrastructure & ERP",
+    "manager": "cio",
+    "account_type": "user",
+    "privileged": true,
+    "vip": true,
+    "mfa_enrolled": true,
+    "usual_countries": ["SA"],
+    "recent_changes": []
+  },
+  "svc_backup": {
+    "display_name": "Backup Service Account",
+    "email": "infra-team@corp.example",
+    "department": "IT Infrastructure",
+    "title": "Service account - Veeam backup jobs",
+    "manager": "f.zahrani",
+    "account_type": "service",
+    "privileged": true,
+    "vip": false,
+    "mfa_enrolled": false,
+    "interactive_logon_allowed": false,
+    "usual_countries": ["SA"],
+    "recent_changes": []
+  },
+  "svc_nessus": {
+    "display_name": "Vulnerability Scanner Service",
+    "email": "vuln-mgmt@corp.example",
+    "department": "Security",
+    "title": "Service account - Nessus",
+    "manager": "secops-lead",
+    "account_type": "service",
+    "privileged": false,
+    "vip": false,
+    "mfa_enrolled": false,
+    "usual_countries": ["SA"],
+    "recent_changes": []
+  }
+}
