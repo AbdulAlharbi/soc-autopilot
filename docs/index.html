@@ -1,0 +1,796 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SOC Autopilot — autonomous incident triage &amp; response</title>
+<meta name="description" content="An autonomous multi-agent system that owns the SOC alert triage and incident response workflow end to end, with a policy-gated boundary between what the agents may do alone and what needs a named human.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>🛡️</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0e13;
+    --bg-2:#0e141b;
+    --surface:#111923;
+    --surface-2:#151f2b;
+    --border:#1e2b3a;
+    --border-2:#2a3a4d;
+    --text:#dde6f0;
+    --text-dim:#93a4b8;
+    --text-faint:#65788e;
+    --accent:#7dd3fc;
+    --accent-dim:#38769c;
+    --tier0:#7c8da0;
+    --tier1:#4ade80;
+    --tier2:#fbbf24;
+    --tier3:#f87171;
+    --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --radius:10px;
+    --maxw:1140px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);
+    font-size:16px;line-height:1.65;-webkit-font-smoothing:antialiased;
+    background-image:
+      radial-gradient(900px 500px at 78% -8%, rgba(125,211,252,.07), transparent 62%),
+      radial-gradient(700px 420px at 4% 4%, rgba(125,211,252,.045), transparent 60%);
+    background-repeat:no-repeat;
+  }
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  code,kbd{font-family:var(--mono);font-size:.875em}
+  h1,h2,h3,h4{line-height:1.25;margin:0;letter-spacing:-.015em}
+  p{margin:0 0 1em}
+  p:last-child{margin-bottom:0}
+
+  /* ---------- header ---------- */
+  header.top{
+    position:sticky;top:0;z-index:50;
+    background:rgba(10,14,19,.82);backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--border);
+  }
+  .top .wrap{display:flex;align-items:center;gap:24px;height:60px}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:-.02em;font-size:15px;color:var(--text)}
+  .brand:hover{text-decoration:none}
+  .brand .dot{width:9px;height:9px;border-radius:50%;background:var(--tier1);box-shadow:0 0 0 3px rgba(74,222,128,.16);flex:none}
+  nav.top-nav{display:flex;gap:22px;margin-left:auto;font-size:13.5px}
+  nav.top-nav a{color:var(--text-dim);font-weight:500}
+  nav.top-nav a:hover{color:var(--accent);text-decoration:none}
+  .gh{
+    display:inline-flex;align-items:center;gap:8px;padding:7px 13px;
+    border:1px solid var(--border-2);border-radius:8px;font-size:13px;font-weight:600;
+    color:var(--text);background:var(--surface);
+  }
+  .gh:hover{border-color:var(--accent-dim);color:var(--accent);text-decoration:none}
+  .gh svg{width:15px;height:15px;fill:currentColor;flex:none}
+  @media(max-width:860px){nav.top-nav{display:none}.gh{margin-left:auto}}
+
+  /* ---------- sections ---------- */
+  section{padding:76px 0;border-top:1px solid var(--border)}
+  section:first-of-type{border-top:none}
+  .eyebrow{
+    font-family:var(--mono);font-size:11.5px;font-weight:500;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--accent);margin-bottom:14px;
+  }
+  h2.sec{font-size:29px;font-weight:700;margin-bottom:14px}
+  .lede{color:var(--text-dim);font-size:16.5px;max-width:74ch}
+  .sec-head{margin-bottom:38px}
+
+  /* ---------- hero ---------- */
+  .hero{padding:80px 0 66px;border-top:none}
+  .hero h1{font-size:clamp(38px,6.2vw,62px);font-weight:700;letter-spacing:-.035em;margin-bottom:20px}
+  .hero h1 .accent{color:var(--accent)}
+  .pitch{font-size:19px;color:var(--text-dim);max-width:70ch;margin-bottom:34px}
+  .pitch strong{color:var(--text);font-weight:600}
+  .chips{display:flex;flex-wrap:wrap;gap:10px}
+  .chip{
+    display:inline-flex;align-items:center;gap:9px;
+    background:var(--surface);border:1px solid var(--border);border-radius:999px;
+    padding:8px 15px;font-size:13px;color:var(--text-dim);
+  }
+  .chip b{color:var(--text);font-family:var(--mono);font-weight:700;font-size:13px}
+  .chip .pip{width:6px;height:6px;border-radius:50%;background:var(--accent);flex:none}
+
+  /* ---------- generic cards ---------- */
+  .grid{display:grid;gap:16px}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .g2{grid-template-columns:repeat(2,1fr)}
+  @media(max-width:960px){.g3{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:680px){.g3,.g2{grid-template-columns:1fr}}
+  .card{
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    padding:22px;
+  }
+  .card h3{font-size:16.5px;font-weight:650;margin-bottom:8px;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+  .card p{font-size:14.5px;color:var(--text-dim)}
+
+  /* ---------- component cards ---------- */
+  .comp{position:relative;display:flex;flex-direction:column}
+  .comp.commander{grid-column:1/-1;background:linear-gradient(180deg,var(--surface-2),var(--surface))}
+  .comp.writer{border-color:rgba(248,113,113,.4);background:linear-gradient(180deg,rgba(248,113,113,.055),var(--surface))}
+  .comp .role{
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;
+    color:var(--text-faint);margin-bottom:9px;
+  }
+  .badge{
+    font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+    padding:3px 8px;border-radius:5px;white-space:nowrap;
+  }
+  .badge.ro{background:rgba(125,211,252,.11);color:var(--accent);border:1px solid rgba(125,211,252,.26)}
+  .badge.rw{background:rgba(248,113,113,.14);color:var(--tier3);border:1px solid rgba(248,113,113,.4)}
+  .badge.orch{background:rgba(148,163,184,.12);color:#b8c6d6;border:1px solid rgba(148,163,184,.28)}
+  .comp dl{margin:14px 0 0;display:grid;grid-template-columns:auto 1fr;gap:7px 12px;font-size:13.5px}
+  .comp dt{
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--text-faint);padding-top:3px;white-space:nowrap;
+  }
+  .comp dd{margin:0;color:var(--text-dim)}
+  .comp dd.none{color:var(--text-faint);font-style:italic}
+  .comp dd.write{color:#fca5a5}
+  .file{font-family:var(--mono);font-size:11.5px;color:var(--text-faint);margin-top:auto;padding-top:14px}
+
+  /* ---------- mermaid ---------- */
+  .diagram{
+    background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius);
+    padding:24px 18px;overflow-x:auto;
+  }
+  .diagram pre.mermaid{margin:0;text-align:center;min-height:40px}
+  .diagram .mermaid-fallback{
+    display:none;font-family:var(--mono);font-size:12.5px;color:var(--text-dim);
+    white-space:pre;text-align:left;
+  }
+  .diagram.failed .mermaid-fallback{display:block}
+  .diagram.failed pre.mermaid{display:none}
+  .cap{font-size:13px;color:var(--text-faint);margin-top:12px;text-align:center}
+
+  /* ---------- tiers ---------- */
+  .tiers{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+  @media(max-width:860px){.tiers{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:520px){.tiers{grid-template-columns:1fr}}
+  .tier{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;border-top:3px solid var(--tc)}
+  .tier .n{font-family:var(--mono);font-size:26px;font-weight:700;color:var(--tc);line-height:1}
+  .tier .lbl{font-size:14.5px;font-weight:600;margin:8px 0 6px}
+  .tier .desc{font-size:13px;color:var(--text-dim);margin-bottom:10px}
+  .tier ul{margin:0;padding-left:0;list-style:none;font-family:var(--mono);font-size:11.5px;color:var(--text-faint);line-height:1.85}
+  .t0{--tc:var(--tier0)} .t1{--tc:var(--tier1)} .t2{--tc:var(--tier2)} .t3{--tc:var(--tier3)}
+
+  .rule{
+    background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent-dim);
+    border-radius:8px;padding:16px 18px;font-size:14.5px;color:var(--text-dim);
+  }
+  .rule b{color:var(--text)}
+  .rule .k{font-family:var(--mono);color:var(--accent);font-size:13px}
+
+  .listcard h4{
+    font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;
+    margin-bottom:12px;display:flex;align-items:center;gap:8px;
+  }
+  .listcard ul{margin:0;padding:0;list-style:none}
+  .listcard li{
+    font-family:var(--mono);font-size:13px;padding:7px 0;border-bottom:1px solid var(--border);
+    color:var(--text);display:flex;justify-content:space-between;gap:12px;align-items:baseline;
+  }
+  .listcard li:last-child{border-bottom:none}
+  .listcard li span{font-family:var(--sans);font-size:12.5px;color:var(--text-faint);text-align:right}
+
+  /* ---------- tables ---------- */
+  .tablewrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface)}
+  table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:660px}
+  th,td{padding:12px 14px;text-align:left;border-bottom:1px solid var(--border);vertical-align:top}
+  th{
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;
+    color:var(--text-faint);font-weight:500;background:var(--bg-2);white-space:nowrap;
+  }
+  tbody tr:last-child td{border-bottom:none}
+  td.mono,th.mono{font-family:var(--mono);font-size:12.5px}
+  .pill{font-family:var(--mono);font-size:11px;font-weight:700;padding:2px 7px;border-radius:4px;white-space:nowrap}
+  .pill.auto{background:rgba(74,222,128,.13);color:var(--tier1)}
+  .pill.human{background:rgba(248,113,113,.13);color:var(--tier3)}
+  .pill.tp{background:rgba(248,113,113,.1);color:#fca5a5}
+  .pill.fp{background:rgba(148,163,184,.13);color:#b8c6d6}
+  .state{font-family:var(--mono);font-size:12px}
+  .state.ok{color:var(--tier1)} .state.warn{color:var(--tier2)} .state.dim{color:var(--text-dim)}
+
+  /* ---------- data stats ---------- */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:26px}
+  @media(max-width:860px){.stats{grid-template-columns:repeat(2,1fr)}}
+  .stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px}
+  .stat .v{font-family:var(--mono);font-size:24px;font-weight:700;color:var(--text);line-height:1.1}
+  .stat .k{font-size:12.5px;color:var(--text-faint);margin-top:5px}
+  .stat .sub{font-size:11.5px;color:var(--text-faint);margin-top:7px;font-family:var(--mono)}
+
+  /* ---------- code ---------- */
+  pre.sh{
+    background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius);
+    padding:18px 20px;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.85;
+    margin:0;color:var(--text);
+  }
+  pre.sh .c{color:var(--text-faint)}
+  pre.sh .p{color:var(--accent);user-select:none}
+  pre.sh .f{color:var(--tier2)}
+
+  /* ---------- honesty ---------- */
+  .honest{background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius);padding:24px 26px}
+  .honest h3{font-size:16px;font-weight:650;margin-bottom:6px}
+  .honest ul{margin:14px 0 0;padding-left:20px;font-size:14px;color:var(--text-dim)}
+  .honest li{margin-bottom:9px}
+  .honest li:last-child{margin-bottom:0}
+  .honest b{color:var(--text);font-weight:600}
+  .note{
+    display:inline-block;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.06em;
+    text-transform:uppercase;padding:2px 7px;border-radius:4px;
+    background:rgba(251,191,36,.11);color:var(--tier2);border:1px solid rgba(251,191,36,.25);
+    vertical-align:middle;
+  }
+
+  footer{border-top:1px solid var(--border);padding:36px 0 52px;color:var(--text-faint);font-size:13.5px}
+  footer .wrap{display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#top"><span class="dot"></span>SOC&nbsp;Autopilot</a>
+    <nav class="top-nav">
+      <a href="#problem">Problem</a>
+      <a href="#components">Components</a>
+      <a href="#policy">Autonomy policy</a>
+      <a href="#data">Data</a>
+      <a href="#run">Run it</a>
+    </nav>
+    <a class="gh" href="https://github.com/AbdulAlharbi/soc-autopilot" target="_blank" rel="noopener">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+      AbdulAlharbi/soc-autopilot
+    </a>
+  </div>
+</header>
+
+<!-- ================= HERO ================= -->
+<section class="hero" id="top">
+  <div class="wrap">
+    <div class="eyebrow">Autonomous multi-agent incident response</div>
+    <h1>SOC&nbsp;Autopilot<span class="accent">.</span></h1>
+    <p class="pitch">
+      An autonomous multi-agent system that owns the SOC alert triage and incident response workflow
+      end to end — alert in; triaged, investigated, contained, verified, reported and closed out —
+      and where the boundary between <strong>acting alone</strong> and <strong>asking a named human</strong>
+      is a YAML policy every action must pass through, not a line in a prompt.
+    </p>
+    <div class="chips">
+      <span class="chip"><span class="pip"></span>Incident Commander + <b>5</b> specialist agents</span>
+      <span class="chip"><span class="pip"></span><b>4</b> end-to-end scenarios</span>
+      <span class="chip"><span class="pip"></span><b>26</b> tests passing</span>
+      <span class="chip"><span class="pip"></span><b>4</b> risk tiers (0–3)</span>
+      <span class="chip"><span class="pip"></span>runs offline · Claude optional</span>
+    </div>
+  </div>
+</section>
+
+<!-- ================= PROBLEM ================= -->
+<section id="problem">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="eyebrow">The problem</div>
+      <h2 class="sec">Not “can the agent act?” — “does it know when to stop and ask?”</h2>
+      <p class="lede">
+        Alert triage is the highest-volume, most repetitive job in a security team, and every response
+        action has a blast radius. Isolating a laptop is an inconvenience; isolating the production ERP
+        server during month-end close is an outage. That combination makes it a real test of agentic
+        automation: the hard part is not capability, it is knowing the limits of your own authority —
+        structurally, not as a suggestion in a system prompt.
+      </p>
+    </div>
+
+    <div class="diagram" data-diagram>
+<pre class="mermaid">
+flowchart TB
+    A(["Alert"]) --> T["Triage"]
+    T -->|false positive| FP["Tuning ticket →<br/>detection engineering<br/><b>closed_false_positive</b>"]
+    T -->|benign| BN["<b>closed_benign</b>"]
+    T -->|true positive| I["Investigate"]
+    I --> P["Plan"]
+    P --> G{"policy.assess<br/>every action"}
+    G -->|"tier ≤ 2 · conf ≥ 0.75"| AUTO["Contain"]
+    G -->|"tier 3 · always-ask"| H["Ask a named human"]
+    H -->|approve| AUTO
+    H -->|defer| W["awaiting_approval<br/>state checkpointed"]
+    W -->|"socpilot decide"| H
+    H -->|deny| E["<b>escalated</b><br/>IR lead notified"]
+    AUTO --> V{"Verify<br/>re-query the system"}
+    V -->|verified| R["<b>resolved</b>"]
+    V -->|unverifiable| E
+</pre>
+      <div class="mermaid-fallback">alert → triage → investigate → plan → contain → verify → report → close
+              │                          │
+              ├─ false positive → tuning ticket → closed_false_positive
+              └─ benign → closed_benign        tier ≤ 2 → execute autonomously
+                                               tier 3 / policy → ask a named human
+                                                 approve → execute · deny → escalated
+                                                 defer  → awaiting_approval → resume</div>
+      <p class="cap">The lifecycle the Incident Commander owns. Every proposed action crosses <code>policy.assess()</code> — playbook-generated and LLM-proposed alike.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= COMPONENTS ================= -->
+<section id="components">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="eyebrow">Components</div>
+      <h2 class="sec">One orchestrator, five specialists — one of them able to change the world</h2>
+      <p class="lede">
+        <code>BaseAgent.can_write</code> defaults to <code>False</code> and is passed to the tool registry on
+        every call. Only the Responder sets it <code>True</code>. Triage, Investigator, Communicator and Reporter
+        can reach queries and notifications; the containment operations are out of their reach by construction.
+      </p>
+    </div>
+
+    <div class="grid g3">
+      <article class="card comp commander">
+        <div class="role">Orchestrator</div>
+        <h3>Incident Commander <span class="badge orch">no tool calls</span></h3>
+        <p>Owns the incident state machine and sequences the specialists. It never calls a tool itself. After every transition it checkpoints both the incident and the whole simulated world, so a crash — or an approval that arrives hours later — resumes rather than restarts.</p>
+        <dl>
+          <dt>Reads</dt><dd>the incident, the policy file, persisted state</dd>
+          <dt>Writes</dt><dd class="none">nothing directly — delegates every side effect</dd>
+          <dt>Decides</dt><dd>phase order, terminal state, when to escalate instead of resolve</dd>
+        </dl>
+        <div class="file">src/socpilot/commander.py</div>
+      </article>
+
+      <article class="card comp">
+        <div class="role">Specialist agent</div>
+        <h3>Triage <span class="badge ro">read-only</span></h3>
+        <p>Is it real, how bad, which playbook. Computes 22 named <em>signals</em> rather than handing the model raw JSON, so both back-ends reason over the same explainable inputs.</p>
+        <dl>
+          <dt>Reads</dt><dd>assets, IAM profile, threat intel on every alert IOC, scanner allowlists, EDR host + suspicious processes, SIEM ±6h</dd>
+          <dt>Writes</dt><dd class="none">nothing</dd>
+          <dt>Asks brain</dt><dd><code>TriageDecision</code> — verdict, severity, confidence, category, MITRE</dd>
+        </dl>
+        <div class="file">src/socpilot/agents/triage.py</div>
+      </article>
+
+      <article class="card comp">
+        <div class="role">Specialist agent</div>
+        <h3>Investigator <span class="badge ro">read-only</span></h3>
+        <p>Pivots the way an analyst would: user → hosts → IPs → asset owners → their sign-ins. With Claude it may request further read-only queries, bounded to 3 per round over 2 rounds, each checked against the registry before it runs.</p>
+        <dl>
+          <dt>Reads</dt><dd>SIEM pivots, EDR per host, threat intel on every discovered IOC, identity change log, email campaign scope</dd>
+          <dt>Writes</dt><dd class="none">nothing</dd>
+          <dt>Asks brain</dt><dd><code>InvestigationDecision</code> — findings, root cause, lateral movement, data at risk</dd>
+        </dl>
+        <div class="file">src/socpilot/agents/investigator.py</div>
+      </article>
+
+      <article class="card comp writer">
+        <div class="role">Specialist agent</div>
+        <h3>Responder <span class="badge rw">write authority</span></h3>
+        <p>The only agent that can change the world, and the place the policy is enforced. Expands the playbook, has every action assessed, executes what it may, gates the rest — then re-queries the system to confirm each action actually took effect.</p>
+        <dl>
+          <dt>Reads</dt><dd>policy, playbooks, the investigation context</dd>
+          <dt>Writes</dt><dd class="write">all 12 containment operations — isolate, kill, block, quarantine, reset, revoke, disable</dd>
+          <dt>Asks brain</dt><dd><code>ResponseDecision</code> — prune or add actions; adds are filtered to the catalogue and policy-assessed identically</dd>
+        </dl>
+        <div class="file">src/socpilot/agents/responder.py</div>
+      </article>
+
+      <article class="card comp">
+        <div class="role">Specialist agent</div>
+        <h3>Communicator <span class="badge ro">read-only</span></h3>
+        <p>Interacting with people is a first-class phase, not a notification afterthought. Approval requests carry the rationale, the policy reason, the business service affected and what was already done autonomously.</p>
+        <dl>
+          <dt>Reads</dt><dd>IAM (who to notify, manager chain), assets (owner, business service)</dd>
+          <dt>Writes</dt><dd>ticket, chat, mail — tier-0 operations, no write authority needed</dd>
+          <dt>Asks brain</dt><dd>drafted approval requests and role-aware user notifications</dd>
+        </dl>
+        <div class="file">src/socpilot/agents/communicator.py</div>
+      </article>
+
+      <article class="card comp">
+        <div class="role">Specialist agent</div>
+        <h3>Reporter <span class="badge ro">read-only</span></h3>
+        <p>Writes the post-incident Markdown. Only the executive summary comes from the model — the triage table, findings, IOCs, timeline, per-action tier/gate/verification and full state history are generated deterministically from the incident.</p>
+        <dl>
+          <dt>Reads</dt><dd>the incident object</dd>
+          <dt>Writes</dt><dd>the report file under <code>out/reports/</code></dd>
+          <dt>Asks brain</dt><dd>an executive summary for a CISO</dd>
+        </dl>
+        <div class="file">src/socpilot/agents/reporter.py</div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ================= SUB-COMPONENTS ================= -->
+<section id="sub">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="eyebrow">Shared machinery</div>
+      <h2 class="sec">Three pieces every agent leans on</h2>
+    </div>
+
+    <div class="grid g3">
+      <article class="card">
+        <h3>The Brain</h3>
+        <p>Agents never talk to a model directly. They hand a task name, a context dict and a pydantic schema to a <code>Brain</code> and get a validated object back — so model output is a proposal that gets checked, never a side effect.</p>
+        <dl class="comp" style="margin-top:14px;display:grid;grid-template-columns:auto 1fr;gap:7px 12px;font-size:13.5px">
+          <dt style="font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-faint);padding-top:3px">Claude</dt>
+          <dd style="margin:0;color:var(--text-dim)">Messages API, schema embedded in the prompt, JSON unwrapped from prose or fences, one repair round, then it falls through to the rule brain and tags the rationale so the fallback is visible</dd>
+          <dt style="font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-faint);padding-top:3px">Heuristic</dt>
+          <dd style="margin:0;color:var(--text-dim)">Explicit rules over the same signals — an additive evidence score with a hard short-circuit for an allowlisted scanner inside its change window. The floor the model must beat, the CI back-end, and the production fallback</dd>
+        </dl>
+        <div class="file">src/socpilot/llm/ — base · claude · heuristic</div>
+      </article>
+
+      <article class="card">
+        <h3>Tool Registry</h3>
+        <p>One choke point between any agent and any system. It validates the operation exists, enforces write authority from the caller's flag, executes, and records the call, parameters and truncated result — failures included, as a distinct <code>tool_error</code> event.</p>
+        <dl class="comp" style="margin-top:14px;display:grid;grid-template-columns:auto 1fr;gap:7px 12px;font-size:13.5px">
+          <dt style="font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-faint);padding-top:3px">24 ops</dt>
+          <dd style="margin:0;color:var(--text-dim)">12 callable without write authority (7 queries + 5 notification/tracking calls, all tier 0) and 12 containment operations</dd>
+          <dt style="font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-faint);padding-top:3px">Catalogue</dt>
+          <dd style="margin:0;color:var(--text-dim)">what the model is shown, so it can only propose operations that actually exist</dd>
+        </dl>
+        <div class="file">src/socpilot/tools/registry.py</div>
+      </article>
+
+      <article class="card">
+        <h3>Hash-chained audit log</h3>
+        <p>Every tool call, decision, approval and state transition is one JSON line whose SHA-256 covers the previous line's hash. <code>socpilot audit</code> walks and verifies the chain, so a rewritten or deleted entry does not go unnoticed.</p>
+        <dl class="comp" style="margin-top:14px;display:grid;grid-template-columns:auto 1fr;gap:7px 12px;font-size:13.5px">
+          <dt style="font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-faint);padding-top:3px">Tested</dt>
+          <dd style="margin:0;color:var(--text-dim)">a test rewrites a payload field to make a tool call look like its opposite and asserts verification flips to false</dd>
+          <dt style="font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-faint);padding-top:3px">Gap</dt>
+          <dd style="margin:0;color:var(--text-dim)">a refused write raises before the audit call, so the refusal itself leaves no entry</dd>
+        </dl>
+        <div class="file">src/socpilot/audit.py</div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ================= POLICY ================= -->
+<section id="policy">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="eyebrow">The centerpiece</div>
+      <h2 class="sec">The autonomy policy</h2>
+      <p class="lede">
+        140 lines of <code>policy.py</code> with no LLM anywhere in it, driven by <code>config/policy.yaml</code>.
+        Every action carries a base risk tier; the tier is bumped for critical or production assets and for
+        privileged, service or VIP identities; and the action runs autonomously only if the final tier sits at or
+        below the ceiling, triage confidence clears the bar, and the per-incident budget has not run out.
+      </p>
+    </div>
+
+    <div class="tiers">
+      <div class="tier t0">
+        <div class="n">0</div>
+        <div class="lbl">Read-only / notify</div>
+        <div class="desc">Queries and the calls that talk to people. Never gated, so the system can always reach a human mid-approval.</div>
+        <ul><li>siem.search</li><li>threat_intel.lookup</li><li>chat.post · mail.send</li><li>ticketing.*</li></ul>
+      </div>
+      <div class="tier t1">
+        <div class="n">1</div>
+        <div class="lbl">Narrow &amp; reversible</div>
+        <div class="desc">One process, one IP, one message. Small blast radius.</div>
+        <ul><li>firewall.block_ip</li><li>edr.kill_process</li><li>edr.collect_forensics</li><li>email_gateway.quarantine_message</li></ul>
+      </div>
+      <div class="tier t2">
+        <div class="n">2</div>
+        <div class="lbl">Disrupts one user/host</div>
+        <div class="desc">The autonomy ceiling by default: the agents may go this far alone.</div>
+        <ul><li>edr.isolate_host</li><li>iam.revoke_sessions_<wbr>and_reset_password</li><li>iam.enforce_mfa_<wbr>reregistration</li></ul>
+      </div>
+      <div class="tier t3">
+        <div class="n">3</div>
+        <div class="lbl">Disrupts the business</div>
+        <div class="desc">Always a human. Reached directly, or by a bump from tier 2.</div>
+        <ul><li>iam.disable_user</li><li>firewall.block_subnet</li><li>edr.wipe_host *</li><li>iam.delete_user *</li></ul>
+      </div>
+    </div>
+    <p class="cap" style="text-align:left;margin-bottom:34px">
+      * <code>edr.wipe_host</code> and <code>iam.delete_user</code> are on the never-automate list but are deliberately
+      <em>not implemented</em> in the registry — the guard exists before the capability does.
+      Tier colours match the CLI's own output.
+    </p>
+
+    <div class="grid g2" style="margin-bottom:16px">
+      <div class="rule">
+        <b>Asset bump.</b> If the action names a host, the inventory is consulted:
+        <span class="k">+1</span> if criticality is <code>critical</code>, <span class="k">+1</span> if the environment is
+        <code>production</code>. <code>SRV-ERP-01</code> is both, so isolating it goes 2 → 3.
+      </div>
+      <div class="rule">
+        <b>Identity bump.</b> If the action names a user, the directory is consulted:
+        <span class="k">+1</span> privileged, <span class="k">+1</span> service account, <span class="k">+1</span> VIP.
+        A password reset is tier 2 for an analyst and tier 3 for a sysadmin.
+      </div>
+      <div class="rule" style="border-left-color:var(--tier2)">
+        <b><code>bump_min_base_tier: 2</code> — the rule that makes it usable.</b> Bumps only escalate actions that are
+        <em>already</em> disruptive. Killing one process or collecting forensics on the critical ERP server stays tier 1
+        and runs autonomously; isolating that same server stops for a human. Without it, everything touching production
+        would need approval — approval fatigue, and the pattern that gets automation switched off.
+      </div>
+      <div class="rule" style="border-left-color:var(--tier3)">
+        <b>Fail closed.</b> An operation with no entry in <code>base_tiers</code> and no <code>tool.*</code> wildcard
+        defaults to tier 3. Adding a tool without adding a tier makes it human-gated, never silently automatic.
+      </div>
+    </div>
+
+    <div class="grid g2" style="margin-bottom:34px">
+      <div class="card listcard">
+        <h4><span class="badge rw">always ask</span> a named human, whatever the tier</h4>
+        <ul>
+          <li>iam.disable_user <span>disabling any account is a business decision</span></li>
+          <li>firewall.block_subnet <span>estate-wide blast radius</span></li>
+        </ul>
+      </div>
+      <div class="card listcard">
+        <h4><span class="badge rw">never automate</span> — checked first, absolute</h4>
+        <ul>
+          <li>edr.wipe_host <span>not runnable even with chat approval</span></li>
+          <li>iam.delete_user <span>not runnable even with chat approval</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="diagram" data-diagram>
+<pre class="mermaid">
+flowchart TD
+    A["base tier from policy.yaml<br/>unknown operation → tier 3"] --> B{"base ≥ bump_min_base_tier?"}
+    B -->|no| C
+    B -->|yes| BUMP["asset bump +1 critical, +1 production<br/>identity bump +1 privileged, +1 service, +1 vip"]
+    BUMP --> C["cap at tier 3"]
+    C --> D{"never_automate or<br/>always_require_approval?"}
+    D -->|yes| GATE
+    D -->|no| E{"tier == 0?"}
+    E -->|yes| AUTO
+    E -->|no| F{"tier ≤ ceiling 2<br/>and confidence ≥ 0.75<br/>and budget not exhausted?"}
+    F -->|no| GATE["requires_approval = true<br/>ask a named human"]
+    F -->|yes| AUTO["requires_approval = false<br/>execute now"]
+</pre>
+      <div class="mermaid-fallback">final_tier = base_tier(tool.op)
+           + (critical ? +1) + (production ? +1)     # only if base_tier >= bump_min_base_tier
+           + (privileged ? +1) + (service ? +1) + (vip ? +1)
+           capped at 3
+
+requires_approval = op in never_automate
+                  or op in always_require_approval
+                  or final_tier > auto_execute_max_tier   (2)
+                  or triage.confidence < min_confidence   (0.75)
+                  or auto_actions_executed >= budget      (10)</div>
+      <p class="cap">The verdict is not just a boolean — the reason string travels with the action into the CLI table, the approval request the human reads, and the report.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= DATA ================= -->
+<section id="data">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="eyebrow">The data</div>
+      <h2 class="sec">A small, coherent enterprise to act on</h2>
+      <p class="lede">
+        Ten simulated systems back the tool registry — seven of them loaded from the JSON files in <code>data/fixtures/</code> — and they are stateful on purpose: isolating a host
+        changes what the EDR returns afterwards, and removing a mailbox rule really deletes it — which is what lets the
+        Responder verify its own containment by reading the system back. The same users, hosts and indicators recur
+        across SIEM, EDR and threat intel, so an investigation has something real to pivot through.
+      </p>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="v">6</div><div class="k">assets</div><div class="sub">3 workstations · 2 servers · 1 scanner</div></div>
+      <div class="stat"><div class="v">9</div><div class="k">identities</div><div class="sub">2 service · 3 privileged · 1 VIP</div></div>
+      <div class="stat"><div class="v">29</div><div class="k">SIEM events</div><div class="sub">12 event types</div></div>
+      <div class="stat"><div class="v">11</div><div class="k">threat-intel indicators</div><div class="sub">6 malicious · 2 suspicious · 3 benign</div></div>
+      <div class="stat"><div class="v">6</div><div class="k">EDR hosts</div><div class="sub">10 processes across them</div></div>
+      <div class="stat"><div class="v">5</div><div class="k">mailbox messages</div><div class="sub">two campaigns, 3 + 2 recipients</div></div>
+      <div class="stat"><div class="v">1</div><div class="k">allowlisted scanner</div><div class="sub">with a change-window schedule</div></div>
+      <div class="stat"><div class="v">5</div><div class="k">response playbooks</div><div class="sub">YAML, keyed by triage category</div></div>
+    </div>
+
+    <h3 style="font-size:17px;margin-bottom:14px">Four scenarios, four different edges of the policy</h3>
+    <div class="tablewrap" style="margin-bottom:16px">
+      <table>
+        <thead>
+          <tr>
+            <th>Scenario</th><th>Verdict</th><th>Category</th><th>Final state</th>
+            <th class="mono">auto</th><th class="mono">human</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><b>phishing-credential-theft</b><br><span style="color:var(--text-faint);font-size:12.5px">AiTM page → token replay from Lagos → OAuth consent + forwarding rule</span></td>
+            <td><span class="pill tp">true_positive</span><br><span class="state dim">high · 0.97</span></td>
+            <td class="mono">credential_<wbr>compromise</td>
+            <td><span class="state ok">resolved</span></td>
+            <td><span class="pill auto">9</span></td>
+            <td><span class="state dim">0</span></td>
+          </tr>
+          <tr>
+            <td><b>beacon-c2-workstation</b><br><span style="color:var(--text-faint);font-size:12.5px">macro doc → unsigned loader → 60 s beacon, 1.8 % jitter</span></td>
+            <td><span class="pill tp">true_positive</span><br><span class="state dim">high · 0.97</span></td>
+            <td class="mono">malware_c2</td>
+            <td><span class="state ok">resolved</span></td>
+            <td><span class="pill auto">7</span></td>
+            <td><span class="state dim">0</span></td>
+          </tr>
+          <tr>
+            <td><b>port-scan-false-positive</b><br><span style="color:var(--text-faint);font-size:12.5px">IDS fires on the scheduled, change-managed Nessus scan</span></td>
+            <td><span class="pill fp">false_positive</span><br><span class="state dim">low · 0.93</span></td>
+            <td class="mono">recon_false_<wbr>positive</td>
+            <td><span class="state ok">closed_false_positive</span></td>
+            <td><span class="pill auto">1</span></td>
+            <td><span class="state dim">0</span></td>
+          </tr>
+          <tr>
+            <td><b>ransomware-precursor-server</b><br><span style="color:var(--text-faint);font-size:12.5px">hijacked admin VPN → service account over RDP → shadow-copy deletion + rclone staging on the production ERP server</span></td>
+            <td><span class="pill tp">true_positive</span><br><span class="state dim">critical · 0.97</span></td>
+            <td class="mono">ransomware</td>
+            <td><span class="state ok">resolved</span> on approve<br><span class="state warn">escalated</span> on deny</td>
+            <td><span class="pill auto">6</span></td>
+            <td><span class="pill human">4</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="cap" style="text-align:left;margin-bottom:34px">
+      Outcomes from a real <code>socpilot run-all --brain heuristic</code>. The false positive still produces work —
+      a tuning ticket on the <code>detection-engineering</code> queue — because silently suppressing a misfiring rule
+      is how a SOC goes blind. The <code>closed_benign</code> branch exists in the commander but no bundled scenario reaches it.
+    </p>
+
+    <h3 style="font-size:17px;margin-bottom:6px">The ransomware split, action by action</h3>
+    <p class="lede" style="font-size:15px;margin-bottom:16px">
+      Containment is deliberately two-phase: everything the policy permits runs and is verified <em>first</em>, and only
+      then are the remaining actions raised for approval — so the exfil process is already dead and the attacker IPs
+      already blocked before anyone reads the message asking whether to take the ERP server offline.
+    </p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th class="mono">tier</th><th>Action</th><th>Gate</th><th>Why</th></tr></thead>
+        <tbody>
+          <tr><td class="mono" style="color:var(--tier1)">1</td><td class="mono">edr.kill_process(host=SRV-ERP-01, pid=7788)</td><td><span class="pill auto">auto</span></td><td>vssadmin deleting shadow copies — one process, narrow blast radius</td></tr>
+          <tr><td class="mono" style="color:var(--tier1)">1</td><td class="mono">edr.kill_process(host=SRV-ERP-01, pid=7801)</td><td><span class="pill auto">auto</span></td><td>rclone staging ERP exports to cloud storage</td></tr>
+          <tr><td class="mono" style="color:var(--tier1)">1</td><td class="mono">firewall.block_ip(ip=91.219.237.18)</td><td><span class="pill auto">auto</span></td><td>ransomware-affiliate ingress</td></tr>
+          <tr><td class="mono" style="color:var(--tier1)">1</td><td class="mono">firewall.block_ip(ip=31.216.148.10)</td><td><span class="pill auto">auto</span></td><td>exfil destination</td></tr>
+          <tr><td class="mono" style="color:var(--tier2)">2</td><td class="mono">edr.isolate_host(host=WS-IT-ADM-03)</td><td><span class="pill auto">auto</span></td><td>corporate workstation — at the ceiling, no bump applies</td></tr>
+          <tr><td class="mono" style="color:var(--tier1)">1</td><td class="mono">edr.collect_forensics(host=SRV-ERP-01)</td><td><span class="pill auto">auto</span></td><td>preserve evidence before remediation destroys it</td></tr>
+          <tr><td class="mono" style="color:var(--tier3)">3</td><td class="mono">edr.isolate_host(host=SRV-ERP-01)</td><td><span class="pill human">human</span></td><td>base 2, +1 critical asset, +1 production → exceeds the ceiling</td></tr>
+          <tr><td class="mono" style="color:var(--tier3)">3</td><td class="mono">edr.isolate_host(host=SRV-FS-03)</td><td><span class="pill human">human</span></td><td>same bump on the finance file server</td></tr>
+          <tr><td class="mono" style="color:var(--tier3)">3</td><td class="mono">iam.disable_user(user=svc_backup)</td><td><span class="pill human">human</span></td><td>on the always-ask list — also breaks legitimate backup jobs</td></tr>
+          <tr><td class="mono" style="color:var(--tier3)">3</td><td class="mono">iam.revoke_sessions_and_reset_password(user=r.otaibi)</td><td><span class="pill human">human</span></td><td>base 2, +1 privileged sysadmin</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ================= HONESTY ================= -->
+<section id="verified">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="eyebrow">Verified &amp; not verified</div>
+      <h2 class="sec">What is proven, and what is only implemented</h2>
+    </div>
+    <div class="grid g2">
+      <div class="honest">
+        <h3 style="color:var(--tier1)">Exercised offline, every run</h3>
+        <p style="font-size:14px;color:var(--text-dim);margin-top:6px">26 tests — 8 policy, 5 templating, 9 end-to-end workflow, 4 Claude-contract — plus <code>run-all</code>, both on Python 3.11 and 3.12 in CI. No test makes a network call.</p>
+        <ul>
+          <li><b>The autonomy boundary</b>, pinned operation by operation: workstation isolation runs alone, the identical operation on a critical production server is tier 3 and gated, and a tier-1 action on that same server is not bumped.</li>
+          <li><b>Containment reaches the systems</b> — tests assert the state of the world (user in the reset set, IP in the block list, messages quarantined, mailbox rule gone), not the agents' account of it.</li>
+          <li><b>Deferred approval survives a process boundary</b> — the incident is reloaded in a brand-new commander and resumed to <code>resolved</code>.</li>
+          <li><b>The audit chain detects tampering</b> — a rewritten payload flips verification to false.</li>
+        </ul>
+      </div>
+      <div class="honest">
+        <h3 style="color:var(--tier2)">Implemented, not proven <span class="note">known gaps</span></h3>
+        <p style="font-size:14px;color:var(--text-dim);margin-top:6px">Taken from the repository's own <em>Known gaps</em> section — stated here at the same confidence.</p>
+        <ul>
+          <li><b>Write-authority refusals are not audited.</b> The registry raises before the audit call, so a refused write leaves no log entry. The refusal works but has no dedicated test.</li>
+          <li><b>Escalation on unverifiable containment is untested.</b> The commander escalates when an executed action reports <code>verified is False</code>, but no test forces that state; the tested escalation path is human denial.</li>
+          <li><b>The Claude path is contract-tested, not live-tested.</b> A stubbed client covers JSON extraction, the single repair round and the heuristic fallback; a live run needs an API key and is not exercised in CI.</li>
+          <li><b>Single-process assumption.</b> The world snapshot has no locking, so two concurrent incidents in separate processes would clobber each other.</li>
+          <li><b>The enterprise systems are simulated.</b> Nothing here talks to a real SIEM, EDR or identity provider.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= RUN ================= -->
+<section id="run">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="eyebrow">Run it</div>
+      <h2 class="sec">Clone, install, watch it work</h2>
+      <p class="lede">
+        Python 3.11+ with pydantic, typer, rich and pyyaml. The <code>anthropic</code> SDK is an optional extra —
+        without an API key the deterministic rule brain runs the entire workflow, which is what lets CI and the demo
+        work with no network.
+      </p>
+    </div>
+
+    <pre class="sh"><span class="c"># install</span>
+<span class="p">$</span> git clone https://github.com/AbdulAlharbi/soc-autopilot &amp;&amp; cd soc-autopilot
+<span class="p">$</span> python -m venv .venv &amp;&amp; source .venv/bin/activate
+<span class="p">$</span> pip install -e <span class="f">".[dev]"</span>
+
+<span class="c"># see what is bundled, then run everything</span>
+<span class="p">$</span> socpilot scenarios
+<span class="p">$</span> socpilot run-all --brain heuristic
+
+<span class="c"># be the human in the loop on the ransomware case</span>
+<span class="p">$</span> socpilot run ransomware-precursor-server
+
+<span class="c"># or defer the decisions and pick them up from another shell,</span>
+<span class="c"># the way a Slack approval would work in production</span>
+<span class="p">$</span> socpilot run ransomware-precursor-server --approvals defer
+<span class="p">$</span> socpilot show INC-XXXXXXXX
+<span class="p">$</span> socpilot decide INC-XXXXXXXX ACT-YYYYYYYY --approve --as f.zahrani -c <span class="f">"maintenance window open"</span>
+
+<span class="c"># the trail, and whether anyone edited it</span>
+<span class="p">$</span> socpilot audit
+
+<span class="c"># 26 tests, no network, under a second</span>
+<span class="p">$</span> pytest -q</pre>
+
+    <p class="cap" style="text-align:left;margin-top:16px">
+      With <code>ANTHROPIC_API_KEY</code> set, the default <code>SOCPILOT_BRAIN=auto</code> selects Claude;
+      without it, the heuristic brain. <code>config/policy.yaml</code> is the whole autonomy contract — drop
+      <code>auto_execute_max_tier</code> to <code>1</code> and the agents ask before resetting anyone's password.
+    </p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div>SOC Autopilot — MIT licensed. Simulated enterprise systems; not connected to production anything.</div>
+    <div><a href="https://github.com/AbdulAlharbi/soc-autopilot">github.com/AbdulAlharbi/soc-autopilot</a></div>
+  </div>
+</footer>
+
+<script type="module">
+  const styles = getComputedStyle(document.documentElement);
+  const v = n => styles.getPropertyValue(n).trim();
+  try {
+    const { default: mermaid } = await import('https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.esm.min.mjs');
+    mermaid.initialize({
+      startOnLoad: false,
+      securityLevel: 'strict',
+      theme: 'base',
+      fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+      flowchart: { curve: 'basis', padding: 14, nodeSpacing: 34, rankSpacing: 40, useMaxWidth: false },
+      themeVariables: {
+        background: v('--bg-2'),
+        primaryColor: v('--surface-2'),
+        primaryTextColor: v('--text'),
+        primaryBorderColor: v('--border-2'),
+        secondaryColor: v('--surface'),
+        tertiaryColor: v('--bg-2'),
+        lineColor: '#4a6076',
+        textColor: v('--text-dim'),
+        mainBkg: v('--surface-2'),
+        nodeBorder: v('--border-2'),
+        clusterBkg: v('--bg-2'),
+        edgeLabelBackground: v('--bg-2'),
+        fontSize: '13px'
+      }
+    });
+    await mermaid.run({ querySelector: 'pre.mermaid' });
+  } catch (err) {
+    console.error('Mermaid failed to render, showing text fallback:', err);
+    document.querySelectorAll('[data-diagram]').forEach(d => d.classList.add('failed'));
+  }
+</script>
+</body>
+</html>
