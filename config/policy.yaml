@@ -1,0 +1,63 @@
+# Autonomy policy for SOC Autopilot.
+#
+# Tiers: 0 = read-only / notify, 1 = low impact & reversible, 2 = disrupts one
+# user or host, 3 = disrupts the business. Agents may execute up to
+# `auto_execute_max_tier` on their own; anything above goes to a human.
+# Tiers are bumped automatically for critical/production assets and
+# privileged / service / VIP accounts (see policy.py), so "isolate a
+# workstation" is tier 2 but "isolate the ERP server" becomes tier 3.
+
+auto_execute_max_tier: 2
+min_confidence_for_auto: 0.75
+max_auto_actions_per_incident: 10
+
+critical_asset_bump: 1
+production_env_bump: 1
+privileged_user_bump: 1
+service_account_bump: 1
+vip_user_bump: 1
+# Bumps only apply to actions whose base tier is at least this; killing one
+# process or collecting forensics on a prod server stays low-risk.
+bump_min_base_tier: 2
+
+# Operations that always need a named human, whatever the tier.
+always_require_approval:
+  - firewall.block_subnet
+  - iam.disable_user            # disabling any account is a business decision
+
+# Operations the agents are never allowed to run, even with approval via chat.
+never_automate:
+  - edr.wipe_host
+  - iam.delete_user
+
+base_tiers:
+  # read-only
+  siem.search: 0
+  siem.auth_history: 0
+  edr.get_host: 0
+  threat_intel.lookup: 0
+  iam.get_user: 0
+  assets.get: 0
+  email_gateway.find_messages: 0
+  ticketing.create_ticket: 0
+  ticketing.update_ticket: 0
+  ticketing.resolve_ticket: 0
+  chat.post: 0
+  mail.send: 0
+  # low
+  firewall.block_ip: 1
+  email_gateway.quarantine_message: 1
+  iam.remove_mailbox_rules: 1
+  iam.revoke_oauth_grant: 1
+  edr.scan_host: 1
+  edr.collect_forensics: 1
+  edr.kill_process: 1          # one process, narrow blast radius
+  # medium
+  iam.revoke_sessions_and_reset_password: 2
+  iam.enforce_mfa_reregistration: 2
+  edr.isolate_host: 2
+  # high
+  iam.disable_user: 3
+  firewall.block_subnet: 3
+  edr.wipe_host: 3
+  iam.delete_user: 3
