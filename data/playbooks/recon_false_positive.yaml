@@ -1,0 +1,14 @@
+# Playbook: detection fired on authorised activity (scanner, red team, change window)
+name: recon_false_positive
+description: Close cleanly and feed the tuning back to detection engineering so it does not fire again.
+mitre: [T1046]
+notify: []
+actions:
+  - tool: ticketing
+    operation: create_ticket
+    params:
+      queue: detection-engineering
+      title: "Tune {alert_rule}: exclude allowlisted source {src_ip} during its change window"
+      body: "Rule {alert_rule} fired on {src_ip} ({allowlist_name}, {allowlist_change_ref}) inside its approved schedule. Suggest adding a scheduled exception keyed on the allowlist entry rather than a blanket IP exclusion."
+    rationale: Route the tuning change to the team that owns the rule instead of silently suppressing it.
+    reversible: true

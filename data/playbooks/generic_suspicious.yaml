@@ -1,0 +1,13 @@
+# Playbook: fallback when triage cannot map the alert to a known category
+name: generic_suspicious
+description: Preserve evidence and hand a well-documented package to a human analyst.
+mitre: []
+notify:
+  - role: asset_owner
+actions:
+  - tool: edr
+    operation: collect_forensics
+    params: {host: "{host}"}
+    when: host
+    rationale: Capture volatile evidence while an analyst reviews.
+    reversible: true

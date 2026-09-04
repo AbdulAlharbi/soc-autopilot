@@ -1,0 +1,20 @@
+{
+  "name": "beacon-c2-workstation",
+  "description": "Macro document drops an unsigned loader that beacons to a Cobalt Strike team server every 60 seconds. Expected: autonomous isolation of the workstation and C2 block.",
+  "expected": {"verdict": "true_positive", "final_state": "resolved", "category": "malware_c2"},
+  "alert": {
+    "id": "ALR-2026-0904-1402",
+    "source": "siem",
+    "rule": "NET-Periodic-Outbound-Beaconing",
+    "title": "Beaconing detected: WS-ENG-042 -> 45.147.230.221:443, period 60s, jitter 1.8%",
+    "description": "47 outbound TLS connections in 47 minutes with near-constant inter-arrival time. JA3 fingerprint matches a known Cobalt Strike client profile.",
+    "timestamp": "2026-09-04T09:00:12Z",
+    "severity_hint": "high",
+    "host": "WS-ENG-042",
+    "user": "a.khan",
+    "src_ip": "10.20.22.42",
+    "dst_ip": "45.147.230.221",
+    "indicators": {"period_seconds": 60.0, "jitter_pct": 1.8, "connection_count": 47, "dst_port": 443, "ja3_match": "cobalt_strike_default"},
+    "tags": ["beaconing", "c2", "network"]
+  }
+}

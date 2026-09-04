@@ -1,0 +1,38 @@
+# Playbook: ransomware precursors on a server (shadow copy deletion, backup tampering, staging)
+name: ransomware
+description: Stop encryption/exfiltration before it starts, cut the attacker's path, and preserve recovery capability.
+mitre: [T1490, T1021.001, T1078.002, T1567.002, T1486]
+notify:
+  - role: asset_owner
+  - role: ir_lead
+actions:
+  - tool: edr
+    operation: kill_process
+    params: {host: "{host}", pid: "{each:malicious_pids}"}
+    rationale: Stop the exfil/staging tooling immediately; this is contained to one process.
+    reversible: false
+  - tool: firewall
+    operation: block_ip
+    params: {ip: "{each:malicious_ips}"}
+    rationale: Sever the attacker's ingress and exfil destinations.
+    reversible: true
+  - tool: edr
+    operation: isolate_host
+    params: {host: "{each:affected_hosts}"}
+    rationale: Isolate every host on the attack path. For production servers this will interrupt the business service.
+    reversible: true
+  - tool: iam
+    operation: disable_user
+    params: {user: "{user}"}
+    rationale: The service account is being used interactively by the attacker; disabling it also breaks legitimate backup jobs.
+    reversible: true
+  - tool: iam
+    operation: revoke_sessions_and_reset_password
+    params: {user: "{each:compromised_users}"}
+    rationale: Admin whose VPN session was hijacked must be re-credentialed.
+    reversible: false
+  - tool: edr
+    operation: collect_forensics
+    params: {host: "{host}"}
+    rationale: Preserve evidence of the intrusion path.
+    reversible: true

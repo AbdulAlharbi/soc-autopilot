@@ -1,0 +1,20 @@
+{
+  "name": "port-scan-false-positive",
+  "description": "IDS fires on an internal port scan that is actually the scheduled, change-managed Nessus scan. Expected: closed as false positive with a detection-tuning ticket, no containment.",
+  "expected": {"verdict": "false_positive", "final_state": "closed_false_positive", "category": "recon_false_positive"},
+  "alert": {
+    "id": "ALR-2026-0904-0611",
+    "source": "ids",
+    "rule": "IDS-Internal-Port-Scan",
+    "title": "Internal port scan from 10.20.5.15 against 10.20.0.0/16 (412 hosts, 1,024 ports)",
+    "description": "SYN scan detected from an internal address across the corporate LAN.",
+    "timestamp": "2026-09-04T03:06:00Z",
+    "severity_hint": "medium",
+    "host": "VA-SCANNER-01",
+    "user": "svc_nessus",
+    "src_ip": "10.20.5.15",
+    "dst_ip": "10.20.0.0/16",
+    "indicators": {"ports": 1024, "hosts": 412, "duration_minutes": 14},
+    "tags": ["port_scan", "recon", "internal"]
+  }
+}
